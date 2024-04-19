@@ -1,0 +1,14 @@
+//ZNET0000 JOB (00089400000O791109),'         ',CLASS=X,       
+//  MSGCLASS=0,NOTIFY=&SYSUID,REGION=0M                        
+//*+JBS BIND LPAR.UT01                                         
+/*JOBPARM S=UT01                                               
+//*                                                            
+//STEP1 EXEC PGM=IKJEFT01                                      
+//SYSPRINT DD SYSOUT=*                                         
+//SYSPROC  DD DISP=SHR,DSN=SYS1.SBPXEXEC                       
+//SYSTSPRT DD SYSOUT=*                                         
+//SYSTERM DD DUMMY                                             
+//SYSTSIN DD *                                                 
+  oshell ipsec -t 111.111.111.111 111.112.112.112 tcp 22222 992
+/*                                                             
+
