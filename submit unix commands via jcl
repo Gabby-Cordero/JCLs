@@ -1,0 +1,85 @@
+//STEP0001 EXEC PGM=IEBGENER                                   
+//SYSPRINT DD SYSOUT=*                                         
+//STDENV DD *                                                  
+_BPXK_AUTOCVT=ON                                               
+_CEE_RUNOPTS='FILETAG(AUTOCVT,AUTOTAG) POSIX(ON)'              
+PATH=/opt/lpp/Rocket-ported/python/bin:$PATH                   
+ZOAU_HOME=/opt/lpp/IBM/zoautil                                 
+PATH=${ZOAU_HOME}/bin:$PATH                                    
+LIBPATH=${ZOAU_HOME}/lib:$LIBPATH                              
+PYTHONPATH=${ZOAU_HOME}/lib                                    
+//SYSIN    DD DUMMY                                            
+//SYSUT1   DD *                                                
+#!/bin/bash                                                    
+echo "--------------------------------------------"            
+ipl=$(opercmd -w "d iplinfo" | grep "RELEASE")                       
+if echo "$ipl" | grep -q "z/OS 03.01";then                           
+    echo "---- RELEASE z/OS 03.01.00 ---- "                          
+else                                                                 
+    echo "---- RELEASE z/OS 02.05.00 ---- "                          
+fi                                                                   
+echo "--------------------------------------------"                  
+echo "---- FTP Client API for java Validation ----"                  
+libEZA=$(ls -la /usr/lpp/tcpip/lib/ | grep "libEZAFTP64.so" | wc -l) 
+if [[ $libEZA -eq 1 ]]; then                                         
+    echo "SUCCESS: libEZAFTP64 is installed in /usr/lpp/tcpip/lib/"  
+else                                                                 
+    echo "  ERROR: libEZAFTP64.so not found"                         
+    value=8                                                          
+fi                                                                   
+osnmp=$(cat /usr/lpp/tcpip/samples/osnmpd.data | grep -e "sysName")  
+echo "---- OSNMP 3.1 Release Validation ----"                        
+if echo "$osnmp" | grep -q "z/OS 3.1"; then                          
+    echo "SUCCESS: osnmpd release 3.1 is installed "                 
+else                                                                 
+    echo "  ERROR: osnmpd.data not found"                            
+    value=8                                                          
+fi                                                                   
+sshkey=$(ssh -Q key | grep "sk-")                                    
+echo "---- SSH KEY Validation ----"                                  
+size=$(echo $sshkey | wc -w)                                         
+if [[ $size -eq 4 ]]; then                                           
+    for line in $sshkey; do                                          
+        echo "SUCCESS: "$line | cut -d "@" -f 1                      
+    done                                                             
+else                                                                 
+    echo "  ERROR: SSH KEY Validation failed, size: $size"           
+    value=8                                                          
+fi                                                                   
+sshkex=$(/usr/sbin/sshd -T 2> /dev/null | \                          
+         grep "diffie-hellman-group14-sha1" | wc -l)                 
+echo "---- SSH KEX Validation ----"                                  
+if [[ $sshkex -eq 0 ]]; then                                         
+    echo "SUCCESS: Group-14 SHA1 removed from default KexAlgorithms" 
+else                                                                 
+    echo "  ERROR: Group-14 SHA1 was not removed from default"         
+    value=8                                                            
+fi                                                                     
+vtam=$(opercmd -w "d net,vtamopts,opt=qdioeib" | grep "IST1189I")      
+echo "---- VTAM QDIO EIB Validation ----"                              
+if echo "$vtam" | grep -q "ENABLED"; then                              
+    echo "SUCCESS: VTAM QDIO EIB is ON"                                
+else                                                                   
+    echo "  ERROR: VTAM QDIO EIB is OFF"                               
+    value=8                                                            
+fi                                                                     
+exit $value                                                            
+//SYSUT2   DD DSN=&&TMP,DISP=(,PASS),                                  
+//         SPACE=(TRK,(1,1)),UNIT=SYSDA                                
+//* -----------------------------------------------------------------  
+//STEP0002 EXEC PGM=IKJEFT01                                           
+//INHFS    DD  DSN=&&TMP,DISP=SHR                                      
+//OUTMVS   DD  PATH='/tmp/test00001.sh',                               
+//             PATHOPTS=(OWRONLY,OCREAT,OTRUNC),PATHDISP=(KEEP,KEEP),  
+//             PATHMODE=(SIRWXU,SIRWXG,SIRWXO)                         
+//SYSTSPRT DD  SYSOUT=*                                                
+//SYSTSIN  DD  *                                                       
+ OCOPY INDD(INHFS) OUTDD(OUTMVS) TEXT PATHOPTS(USE) CONVERT(YES)       
+//* -----------------------------------------------------------------  
+//*  CALL SCRIPT                                                       
+//* -----------------------------------------------------------------  
+//STEP0003 EXEC PGM=BPXBATCH                                           
+//STDOUT   DD SYSOUT=*                                                 
+//STDERR   DD SYSOUT=*                                                 
+//STDPARM  DD *                                                        
+sh /tmp/test00001.sh                                                   
