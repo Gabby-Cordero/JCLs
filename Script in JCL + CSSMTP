@@ -1,75 +1,183 @@
 
-//ZNET2222 JOB (00089400000O791109),'         ',CLASS=X, 
-//  MSGCLASS=0,NOTIFY=&SYSUID,REGION=0M                  
-//*+JBS BIND LPAR.SDEV                                   
-/*JOBPARM S=SDEV                                         
-//*                                                      
-//STEP0000 EXEC PGM=IDCAMS                               
-//SYSPRINT DD  SYSOUT=*                                  
- DELETE  O791109.MAIL.MAIL                               
- SET MAXCC=0                                             
-//*                                                      
-//STEP0001 EXEC PGM=IEBGENER                             
-//SYSPRINT DD SYSOUT=*                                   
-//SYSIN    DD DUMMY                                      
-//SYSUT1   DD *                                          
-#!/bin/bash                                              
-value=0                                                  
-echo "--------------------------------------------"      
-ipl=$(opercmd -w "d iplinfo" | grep "RELEASE")           
-if echo "$ipl" | grep -q "z/OS 03.01";then               
-    echo "---- RELEASE z/OS 03.01.00 ---- "                          
-else                                                                 
-    echo "---- RELEASE z/OS 02.05.00 ---- "                          
-fi                                                                   
-echo "--------------------------------------------"                  
-echo "---- FTP Client API for java Validation ----"                  
-libEZA=$(ls -la /usr/lpp/tcpip/lib/ | grep "libEZAFTP64.so" | wc -l) 
-if [[ $libEZA -eq 1 ]]; then                                         
-    echo "SUCCESS: libEZAFTP64 is installed in /usr/lpp/tcpip/lib/"  
-else                                                                 
-    echo "  ERROR: libEZAFTP64.so not found"                         
-    value=8                                                          
-fi                                                                   
-osnmp=$(cat /usr/lpp/tcpip/samples/osnmpd.data | grep -e "sysName")  
-echo "---- OSNMP 3.1 Release Validation ----"                        
-if echo "$osnmp" | grep -q "z/OS 3.1"; then                          
-    echo "SUCCESS: osnmpd release 3.1 is installed "                 
-else                                                                 
-    echo "  ERROR: osnmpd.data not found"                            
-    value=8                                                          
-fi                                                                  
-sshkey=$(ssh -Q key | grep "sk-")                                   
-echo "---- SSH KEY Validation ----"                                 
-size=$(echo $sshkey | wc -w)                                        
-if [[ $size -eq 4 ]]; then                                          
-    for line in $sshkey; do                                         
-        echo "SUCCESS: "$line | cut -d "@" -f 1                     
-    done                                                            
-else                                                                
-    echo "  ERROR: SSH KEY Validation failed, size: $size"          
-    value=8                                                         
-fi                                                                  
-sshkex=$(/usr/sbin/sshd -T 2> /dev/null | \                         
-         grep "diffie-hellman-group14-sha1" | wc -l)                
-echo "---- SSH KEX Validation ----"                                 
-if [[ $sshkex -eq 0 ]]; then                                        
-    echo "SUCCESS: Group-14 SHA1 removed from default KexAlgorithms"
-else                                                                
-    echo "  ERROR: Group-14 SHA1 was not removed from default"      
-    value=8                                                         
-fi                                                                     
-vtam=$(opercmd -w "d net,vtamopts,opt=qdioeib" | grep "IST1189I")      
-echo "---- VTAM QDIO EIB Validation ----"                              
-if echo "$vtam" | grep -q "ENABLED"; then                              
-    echo "SUCCESS: VTAM QDIO EIB is ON"                                
-else                                                                   
-    echo "  ERROR: VTAM QDIO EIB is OFF"                               
-    value=8                                                            
-fi                                                                     
-exit $value                                                            
-//SYSUT2   DD DSN=&&TMP1,DISP=(,PASS),                                 
-//         SPACE=(TRK,(1,1)),UNIT=SYSDA                                
+//ZNET0000 JOB (00089400000O791109),'         ',CLASS=X,  
+//  MSGCLASS=0,NOTIFY=&SYSUID,REGION=0M                   
+//*+JBS BIND LPAR.SDEV                                    
+/*JOBPARM S=SDEV                                          
+//*                                                       
+//STEP0000 EXEC PGM=IDCAMS                                
+//SYSPRINT DD  SYSOUT=*                                   
+ DELETE  O791109.MAIL.MAIL                                
+ SET MAXCC=0                                              
+//*                                                       
+//STEP0001 EXEC PGM=IEBGENER                              
+//SYSPRINT DD SYSOUT=*                                    
+//SYSIN    DD DUMMY                                       
+//SYSUT1   DD *                                           
+#!/bin/bash                                               
+value=0                                                   
+echo "                      "                             
+echo "                      "                             
+echo "                      "                             
+echo "                      "                              
+echo "--------------------------------------------"        
+hostname                                                   
+echo "--------------------------------------------"        
+ipl=$(opercmd -w "d iplinfo" | grep "RELEASE")             
+if echo "$ipl" | grep -q "z/OS 03.01";then                 
+    echo " RELEASE z/OS 03.01.00      "                    
+else                                                       
+    echo " RELEASE z/OS 02.05.00      "                    
+fi                                                         
+echo "--------------------------------------------"        
+sym=$(opercmd -w "d symbols" | grep "&MRLEVEL.")           
+if echo "$sym" | grep -q "MARS243A"; then                  
+    echo "LEVEL MARS243A"                                  
+elif echo "$sym" | grep -q "MARS243B"; then                
+    echo "LEVEL MARS243B"                                  
+elif echo "$sym" | grep -q "MARS243C"; then                
+    echo "LEVEL MARS243C"                                  
+else                                                       
+    echo "LEVEL 2.5"                                       
+fi                                                                    
+echo "--------------------------------------------"                   
+echo "     FTP Client API for java Validation     "                   
+echo "--------------------------------------------"                   
+libEZA=$(ls -la /usr/lpp/tcpip/lib/ | grep "libEZAFTP64.so" | wc -l)  
+if [[ $libEZA -eq 1 ]]; then                                          
+    echo "SUCCESS: libEZAFTP64 is installed in /usr/lpp/tcpip/lib/"   
+else                                                                  
+    echo "  ERROR: libEZAFTP64.so not found"                          
+    value=8                                                           
+fi                                                                    
+osnmp=$(cat /usr/lpp/tcpip/samples/osnmpd.data | grep -e "sysName")   
+echo "--------------------------------------------"                   
+echo "     OSNMP 3.1 Release Validation           "                   
+echo "--------------------------------------------"                   
+if echo "$osnmp" | grep -q "z/OS 3.1"; then                           
+    echo "SUCCESS: osnmpd release 3.1 is installed "                  
+else                                                                  
+    echo "  ERROR: osnmpd.data not found"                             
+    value=8                                                           
+fi                                                               
+sshkey=$(ssh -Q key | grep "sk-")                                
+echo "--------------------------------------------"              
+echo "     SSH KEY Validation                     "              
+echo "--------------------------------------------"              
+size=$(echo $sshkey | wc -w)                                     
+if [[ $size -eq 4 ]]; then                                       
+    for line in $sshkey; do                                      
+        echo "SUCCESS: "$line | cut -d "@" -f 1                  
+    done                                                         
+else                                                             
+    echo "  ERROR: SSH KEY Validation failed, size: $size"       
+    value=8                                                      
+fi                                                               
+sshkex=$(/usr/sbin/sshd -T 2> /dev/null | \                      
+         grep "diffie-hellman-group14-sha1" | wc -l)             
+echo "--------------------------------------------"              
+echo "     SSH KEX Validation                     "              
+echo "--------------------------------------------"              
+if [[ $sshkex -eq 0 ]]; then                                     
+    echo "SUCCESS: Group-14 SHA1 removed from default KexAlgorithms"  
+else                                                                  
+    echo "  ERROR: Group-14 SHA1 was not removed from default"        
+    value=8                                                           
+fi                                                                    
+vtam=$(opercmd -w "d net,vtamopts,opt=qdioeib" | grep "IST1189I")     
+echo "--------------------------------------------"                   
+echo "     VTAM QDIO EIB Validation               "                   
+echo "--------------------------------------------"                   
+if echo "$vtam" | grep -q "ENABLED"; then                             
+    echo "SUCCESS: VTAM QDIO EIB is ON"                               
+else                                                                  
+    echo "  ERROR: VTAM QDIO EIB is OFF"                              
+    value=8                                                           
+fi                                                                    
+echo "--------------------------------------------"                   
+echo "                      "                                         
+echo "                      "                                         
+echo "---- DEFAULT GATEWAY ----"                                      
+opercmd -w "d tcpip,,n,route" | grep "DEFAULT"                        
+echo "                      "                                   
+echo "                      "                                   
+echo "---- CPCP SESSION    ----"                                
+opercmd -w "d net,cpcp" | grep "IST1766I"                       
+echo "                      "                                   
+echo "                      "                                   
+echo "---- STARTED TASKS   ----"                                
+net=$(opercmd -w "d a,net")                                     
+if echo "$net" | grep -q "WUID="; then                          
+    echo "                       VTAM IS UP  "                  
+else                                                            
+    echo "                       VTAM IS NOT UP"                
+    value=8                                                     
+fi                                                              
+tcp=$(opercmd -w "d a,tcpip")                                   
+if echo "$tcp" | grep -q "WUID="; then                          
+    echo "                       TCPIP IS UP "                  
+else                                                            
+    echo "                       TCPIP IS NOT UP"               
+    value=8                                                     
+fi                                                             
+omp=$(opercmd -w "d a,omproute")                               
+if echo "$omp" | grep -q "WUID="; then                         
+    echo "                       OMPROUTE IS UP"               
+else                                                           
+    echo "                       OMPROUTE IS NOT UP"           
+    value=8                                                    
+fi                                                             
+ftp=$(opercmd -w "d a,ftpsec*")                                
+if echo "$ftp" | grep -q "WUID="; then                         
+    echo "                       FTPSEC IS UP"                 
+else                                                           
+    echo "                       FTPSEC IS NOT UP"             
+    value=8                                                    
+fi                                                             
+ft2=$(opercmd -w "d a,ftpcer*")                                
+if echo "$ft2" | grep -q "WUID="; then                         
+    echo "                       FTPCERT IS UP"                
+else                                                           
+    echo "                       FTPCERT IS NOT UP"            
+    value=8                                                    
+fi                                                             
+pag=$(opercmd -w "d a,pagent")                                 
+if echo "$pag" | grep -q "WUID="; then                         
+    echo "                       PAGENT IS UP"                 
+else                                                           
+    echo "                       PAGENT IS NOT UP"             
+    value=8                                                    
+fi                                                             
+nss=$(opercmd -w "d a,nssd*")                                  
+if echo "$nss" | grep -q "WUID="; then                         
+    echo "                       NSSD IS UP"                   
+else                                                           
+    echo "                       NSSD IS NOT UP"               
+    value=8                                                    
+fi                                                             
+tnn=$(opercmd -w "d a,tn32*")                                  
+if echo "$tnn" | grep -q "WUID="; then                         
+    echo "                       TELNET IS UP"                 
+else                                                           
+    echo "                       TELNET IS NOT UP"              
+    value=8                                                     
+fi                                                              
+ike=$(opercmd -w "d a,iked*")                                   
+if echo "$ike" | grep -q "WUID="; then                          
+    echo "                       IKED IS UP"                    
+else                                                            
+    echo "                       IKED IS NOT UP"                
+    value=8                                                     
+fi                                                              
+css=$(opercmd -w "d a,cssm*")                                   
+if echo "$css" | grep -q "WUID="; then                          
+    echo "                       CSSMTP IS UP "                 
+else                                                            
+    echo "                       CSSMTP IS NOT UP"              
+    value=8                                                     
+fi                                                              
+exit $value                                                     
+//SYSUT2   DD DSN=&&TMP1,DISP=(,PASS),                          
+//         SPACE=(TRK,(1,1)),UNIT=SYSDA                         
 //* -----------------------------------------------------------------  
 //STEP0002 EXEC PGM=IKJEFT01                                           
 //INHFS    DD  DSN=&&TMP1,DISP=SHR                                     
@@ -87,55 +195,46 @@ exit $value
 //             PATHOPTS=(OWRONLY,OCREAT,OTRUNC),PATHDISP=(KEEP,KEEP),  
 //             PATHMODE=(SIRWXU,SIRWXG,SIRWXO)                         
 //STDERR   DD SYSOUT=*                                                 
-//STDENV DD *                                                          
-PATH=/opt/lpp/Rocket-ported/python/bin:$PATH                           
-ZOAU_HOME=/opt/lpp/IBM/zoautil                                         
-PATH=${ZOAU_HOME}/bin:$PATH                                            
-LIBPATH=${ZOAU_HOME}/lib:$LIBPATH                                      
-PYTHONPATH=${ZOAU_HOME}/lib                                            
 //STDPARM  DD *                                                        
 sh /tmp/test00001.sh                                                   
 //*                                                                    
-//STEP0004 EXEC PGM=IKJEFT01                                           
-//INHFS    DD  PATH='/tmp/test00002',PATHOPTS=(ORDONLY)                
-//OUTMVS   DD  DSN=O791109.MAIL.MAIL,                               
-//             DISP=(NEW,CATLG),UNIT=SYSDA,SPACE=(TRK,(6,6),RLSE),  
-//             DCB=(RECFM=FB,LRECL=80,BLKSIZE=0,DSORG=PS)           
-//SYSTSPRT DD  SYSOUT=*                                             
-//SYSTSIN  DD  *                                                    
- OCOPY INDD(INHFS) OUTDD(OUTMVS) TEXT PATHOPTS(USE) CONVERT(YES)    
-//STEP0005 EXEC PGM=IEBGENER,COND=(0,NE,STEP0003)                   
-//SYSIN DD DUMMY                                                    
-//SYSPRINT DD SYSOUT=*                                              
-//SYSUT2 DD SYSOUT=K,DEST=SMTP                                      
-//SYSIN  DD DUMMY                                                   
-//SYSUT1 DD *,LRECL=80                                              
-HELO SDEV.MF.JPMCHASE.NET                                           
-MAIL FROM:<GABRIEL-SEBASTIAN.CORDERO@JPMORGAN.COM>                  
-RCPT TO:<GABRIEL-SEBASTIAN.CORDERO@JPMORGAN.COM>                    
-DATA                                                                
-FROM: GABRIEL-SEBASTIAN.CORDERO@JPMORGAN.COM                        
-TO: GABRIEL-SEBASTIAN.CORDERO@JPMORGAN.COM                          
-SUBJECT: VALIDATIONS !!!                                            
-Validations are OK                                                  
-//       DD DISP=SHR,DSN=O791109.MAIL.MAIL                        
-//STEP0006 EXEC PGM=IEBGENER,COND=(0,EQ,STEP0003)                 
-//SYSIN DD DUMMY                                                  
-//SYSPRINT DD SYSOUT=*                                            
-//SYSUT2 DD SYSOUT=K,DEST=SMTP                                    
-//SYSIN  DD DUMMY                                                 
-//SYSUT1 DD *,LRECL=80                                            
-HELO SDEV.MF.JPMCHASE.NET                                         
-MAIL FROM:<GABRIEL-SEBASTIAN.CORDERO@JPMORGAN.COM>                
-RCPT TO:<GABRIEL-SEBASTIAN.CORDERO@JPMORGAN.COM>                  
-DATA                                                              
-FROM: GABRIEL-SEBASTIAN.CORDERO@JPMORGAN.COM                      
-TO: GABRIEL-SEBASTIAN.CORDERO@JPMORGAN.COM                        
-SUBJECT: VALIDATIONS !!!                                          
-FAILURES                                                          
-//       DD DISP=SHR,DSN=O791109.MAIL.MAIL                        
-
-
-
----
-
+//STEP0004 EXEC PGM=IKJEFT01                                         
+//INHFS    DD  PATH='/tmp/test00002',PATHOPTS=(ORDONLY)              
+//OUTMVS   DD  DSN=O791109.MAIL.MAIL,                                
+//             DISP=(NEW,CATLG),UNIT=SYSDA,SPACE=(TRK,(6,6),RLSE),   
+//             DCB=(RECFM=FB,LRECL=80,BLKSIZE=0,DSORG=PS)            
+//SYSTSPRT DD  SYSOUT=*                                              
+//SYSTSIN  DD  *                                                     
+ OCOPY INDD(INHFS) OUTDD(OUTMVS) TEXT PATHOPTS(USE) CONVERT(YES)     
+//STEP0005 EXEC PGM=IEBGENER,COND=(0,NE,STEP0003)                    
+//SYSIN DD DUMMY                                                     
+//SYSPRINT DD SYSOUT=*                                               
+//SYSUT2 DD SYSOUT=(B,SMTP)                                          
+//SYSIN  DD DUMMY                                                    
+//SYSUT1 DD *,LRECL=80                                               
+HELO SMTP                                                            
+MAIL FROM:<GABRIEL-SEBASTIAN.CORDERO@JPMORGAN.COM>                   
+RCPT TO:<GABRIEL-SEBASTIAN.CORDERO@JPMORGAN.COM>                     
+DATA                                                                 
+FROM: GABRIEL-SEBASTIAN.CORDERO@JPMORGAN.COM                         
+TO: GABRIEL-SEBASTIAN.CORDERO@JPMORGAN.COM                           
+SUBJECT: Validations OK !!!                                            
+Validations are OK                                                     
+------------------                                                     
+//       DD DISP=SHR,DSN=O791109.MAIL.MAIL                             
+//STEP0006 EXEC PGM=IEBGENER,COND=(0,EQ,STEP0003)                      
+//SYSIN DD DUMMY                                                       
+//SYSPRINT DD SYSOUT=*                                                 
+//SYSUT2 DD SYSOUT=(B,SMTP)                                            
+//SYSIN  DD DUMMY                                                      
+//SYSUT1 DD *,LRECL=80                                                 
+HELO SMTP                                                              
+MAIL FROM:<GABRIEL-SEBASTIAN.CORDERO@JPMORGAN.COM>                     
+RCPT TO:<GABRIEL-SEBASTIAN.CORDERO@JPMORGAN.COM>                       
+DATA                                                                   
+FROM: GABRIEL-SEBASTIAN.CORDERO@JPMORGAN.COM                           
+TO: GABRIEL-SEBASTIAN.CORDERO@JPMORGAN.COM                             
+SUBJECT: Validations !!!                                               
+Failures                                                               
+//       DD DISP=SHR,DSN=O791109.MAIL.MAIL                             
+******************************** Bottom of Data ***********************
